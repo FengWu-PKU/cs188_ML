@@ -67,6 +67,12 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        h=30    # hidden layer size
+        self.m0=nn.Parameter(1,h)  
+        self.b0=nn.Parameter(1,h)
+        self.m1=nn.Parameter(h,1)
+        self.b1=nn.Parameter(1,1)
+
 
     def run(self, x):
         """
@@ -78,6 +84,10 @@ class RegressionModel(object):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
+        Z1=nn.AddBias(nn.Linear(x,self.m0),self.b0)
+        A1=nn.ReLU(Z1)
+        Z2=nn.AddBias(nn.Linear(A1,self.m1),self.b1)
+        return Z2
 
     def get_loss(self, x, y):
         """
@@ -90,12 +100,25 @@ class RegressionModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SquareLoss(self.run(x),y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        learningRate=-0.001  # why it must be negative? Gradient descent to minimize the loss function
+        maxloss=0.01
+        loss=float('inf')
+        while loss>maxloss:
+            loss=self.get_loss(nn.Constant(dataset.x),nn.Constant(dataset.y))
+            grad_m0,grad_b0,grad_m1,grad_b1=nn.gradients(loss,[self.m0,self.b0,self.m1,self.b1])
+            self.m0.update(grad_m0,learningRate)
+            self.b0.update(grad_b0,learningRate)
+            self.m1.update(grad_m1,learningRate)
+            self.b1.update(grad_b1,learningRate)
+            loss=nn.as_scalar(self.get_loss(nn.Constant(dataset.x),nn.Constant(dataset.y)))
+
 
 class DigitClassificationModel(object):
     """
